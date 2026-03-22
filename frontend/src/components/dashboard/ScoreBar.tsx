@@ -8,7 +8,7 @@ export function ScoreBar({ score }: ScoreBarProps) {
   return (
     <section className="panel">
       <div className="score-line">
-        <h2>Điểm sức khỏe hệ thống</h2>
+        <h2>Healcheck</h2>
         <strong>{safeScore}/100</strong>
       </div>
       <div className="score-bar">

@@ -53,10 +53,12 @@ begin
 end;
 $$;
 
+drop trigger if exists trg_profiles_updated_at on public.profiles;
 create trigger trg_profiles_updated_at
 before update on public.profiles
 for each row execute function public.set_updated_at();
 
+drop trigger if exists trg_prtg_servers_updated_at on public.prtg_servers;
 create trigger trg_prtg_servers_updated_at
 before update on public.prtg_servers
 for each row execute function public.set_updated_at();
@@ -93,6 +95,7 @@ alter table public.audit_logs enable row level security;
 alter table public.alerts enable row level security;
 
 -- Profiles policies
+drop policy if exists "profile_select_own_or_admin" on public.profiles;
 create policy "profile_select_own_or_admin"
 on public.profiles
 for select
@@ -105,6 +108,7 @@ using (
   )
 );
 
+drop policy if exists "profile_update_own_or_admin" on public.profiles;
 create policy "profile_update_own_or_admin"
 on public.profiles
 for update
@@ -125,6 +129,7 @@ with check (
 );
 
 -- PRTG server config is admin-only
+drop policy if exists "prtg_servers_admin_all" on public.prtg_servers;
 create policy "prtg_servers_admin_all"
 on public.prtg_servers
 for all
@@ -143,6 +148,7 @@ with check (
 );
 
 -- Audit logs visible to all authenticated users
+drop policy if exists "audit_logs_authenticated_read" on public.audit_logs;
 create policy "audit_logs_authenticated_read"
 on public.audit_logs
 for select
@@ -150,6 +156,7 @@ to authenticated
 using (true);
 
 -- Insert logs only by admin (or edge function using service role bypass)
+drop policy if exists "audit_logs_admin_insert" on public.audit_logs;
 create policy "audit_logs_admin_insert"
 on public.audit_logs
 for insert
@@ -162,12 +169,14 @@ with check (
 );
 
 -- Alerts visible to all authenticated users
+drop policy if exists "alerts_authenticated_read" on public.alerts;
 create policy "alerts_authenticated_read"
 on public.alerts
 for select
 to authenticated
 using (true);
 
+drop policy if exists "alerts_admin_mutation" on public.alerts;
 create policy "alerts_admin_mutation"
 on public.alerts
 for all
@@ -186,4 +195,16 @@ with check (
 );
 
 -- Realtime publication
-alter publication supabase_realtime add table public.alerts;
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_publication_tables
+    where pubname = 'supabase_realtime'
+      and schemaname = 'public'
+      and tablename = 'alerts'
+  ) then
+    alter publication supabase_realtime add table public.alerts;
+  end if;
+end;
+$$;

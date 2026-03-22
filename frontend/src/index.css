@@ -304,6 +304,10 @@ button:disabled {
   gap: 8px;
 }
 
+.panel h2 {
+  margin-bottom: 12px;
+}
+
 .inline-check {
   display: flex;
   align-items: center;
@@ -351,6 +355,51 @@ button:disabled {
   font-weight: 600;
 }
 
+.supabase-status-btn {
+  position: fixed;
+  top: 14px;
+  right: 14px;
+  z-index: 1200;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  background: rgba(255, 253, 248, 0.95);
+  color: var(--ink);
+  font-size: 0.86rem;
+  backdrop-filter: blur(8px);
+}
+
+.supabase-status-btn:hover {
+  background: rgba(255, 253, 248, 1);
+}
+
+.supabase-status-btn .dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  display: inline-block;
+}
+
+.supabase-status-btn.checking .dot {
+  background: #7d8d8c;
+}
+
+.supabase-status-btn.online .dot {
+  background: #138f3f;
+}
+
+.supabase-status-btn.degraded .dot {
+  background: #b0701f;
+}
+
+.supabase-status-btn.offline .dot {
+  background: #bf3d2a;
+}
+
 @keyframes rise-in {
   from {
     opacity: 0;
@@ -379,5 +428,12 @@ button:disabled {
 
   .content {
     padding: 16px;
+  }
+
+  .supabase-status-btn {
+    top: 10px;
+    right: 10px;
+    font-size: 0.78rem;
+    padding: 6px 10px;
   }
 }

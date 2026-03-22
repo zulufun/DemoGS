@@ -53,3 +53,34 @@ export interface AdminUserRecord {
   role: UserRole
   created_at: string
 }
+
+export interface OperationTask {
+  id: string
+  task_date: string
+  executor: string
+  lead_person: string
+  supervisor: string
+  unit: string
+  work_content: string
+  start_time: string
+  end_time: string | null
+  result_content: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface GateOpenLog {
+  id: string
+  contact_first_name: string
+  contact_last_name: string
+  unit: string
+  ip_source: string
+  ip_dest: string
+  port: string
+  usage_time: string
+  basis: string
+  work_content: string
+  opened_by: string
+  created_at: string
+  updated_at: string
+}

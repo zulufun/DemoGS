@@ -16,6 +16,8 @@ interface AuthContextValue {
   user: User | null
   profile: UserProfile | null
   loading: boolean
+  profileLoading: boolean
+  isAdmin: boolean
   signIn: (email: string, password: string) => Promise<void>
   signOut: () => Promise<void>
   refreshProfile: (userId?: string) => Promise<void>
@@ -28,13 +30,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
+  const [profileLoading, setProfileLoading] = useState(false)
 
   const refreshProfile = useCallback(async (targetUserId?: string) => {
     const userId = targetUserId ?? user?.id
     if (!userId) {
       setProfile(null)
+      setProfileLoading(false)
       return
     }
+
+    setProfileLoading(true)
 
     const { data, error } = await supabase
       .from('profiles')
@@ -45,34 +51,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (error) {
       console.error('Cannot load profile', error)
       setProfile(null)
+      setProfileLoading(false)
       return
     }
 
     setProfile(data ?? null)
+    setProfileLoading(false)
   }, [user?.id])
 
   useEffect(() => {
     let mounted = true
 
-    supabase.auth.getSession().then(async ({ data }) => {
+    supabase.auth.getSession().then(({ data }) => {
       if (!mounted) return
       setSession(data.session)
       setUser(data.session?.user ?? null)
-      if (data.session?.user) {
-        await refreshProfile(data.session.user.id)
-      }
       setLoading(false)
+
+      if (data.session?.user) {
+        void refreshProfile(data.session.user.id)
+      } else {
+        setProfileLoading(false)
+      }
     })
 
     const { data: authListener } = supabase.auth.onAuthStateChange(
-      async (_event, newSession) => {
+      (_event, newSession) => {
         setSession(newSession)
         setUser(newSession?.user ?? null)
         if (newSession?.user) {
-          await refreshProfile(newSession.user.id)
+          void refreshProfile(newSession.user.id)
         } else {
           setProfile(null)
+          setProfileLoading(false)
         }
+
+        setLoading(false)
       },
     )
 
@@ -92,9 +106,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (error) throw error
   }
 
+  const isAdmin = useMemo(() => {
+    const metadataRole =
+      typeof user?.user_metadata?.role === 'string' ? user.user_metadata.role : null
+
+    return profile?.role === 'admin' || metadataRole === 'admin'
+  }, [profile?.role, user?.user_metadata])
+
   const value = useMemo(
-    () => ({ session, user, profile, loading, signIn, signOut, refreshProfile }),
-    [session, user, profile, loading, refreshProfile],
+    () => ({
+      session,
+      user,
+      profile,
+      loading,
+      profileLoading,
+      isAdmin,
+      signIn,
+      signOut,
+      refreshProfile,
+    }),
+    [session, user, profile, loading, profileLoading, isAdmin, refreshProfile],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

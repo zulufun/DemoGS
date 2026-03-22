@@ -8,11 +8,10 @@ interface MenuSection {
 }
 
 export function Sidebar() {
-  const { profile } = useAuth()
+  const { isAdmin } = useAuth()
   const [openMonitoring, setOpenMonitoring] = useState(true)
+  const [openOperations, setOpenOperations] = useState(true)
   const [openAccounts, setOpenAccounts] = useState(true)
-
-  const isAdmin = profile?.role === 'admin'
 
   const sections = useMemo<MenuSection[]>(
     () => [
@@ -20,7 +19,15 @@ export function Sidebar() {
         title: 'Cấu hình giám sát',
         items: [
           { to: '/monitoring/prtg', label: 'PRTG', adminOnly: true },
+          // { to: '/monitoring/prtg', label: 'PRTG' },
           { to: '/monitoring/audit-log', label: 'Auditlog' },
+        ],
+      },
+      {
+        title: 'Điều hành trực',
+        items: [
+          { to: '/operations/tasks', label: 'Quản lý ra vào' },
+          { to: '/operations/gate-logs', label: 'Nhật kí mở cổng' },
         ],
       },
       {
@@ -30,6 +37,7 @@ export function Sidebar() {
           { to: '/accounts/change-password', label: 'ChangePassword' },
         ],
       },
+      
     ],
     [],
   )
@@ -37,8 +45,8 @@ export function Sidebar() {
   return (
     <aside className="sidebar">
       <div className="brand">
-        <h2>PRTG Monitor</h2>
-        <p>Supabase + Realtime</p>
+        <h2>Hệ sinh thái</h2>
+        <p>XXXXxxxxxXXXXXXX</p>
       </div>
 
       <nav>
@@ -73,6 +81,19 @@ export function Sidebar() {
                   {item.label}
                 </NavLink>
               ))}
+          </div>
+        ) : null}
+
+        <button className="menu-toggle" onClick={() => setOpenOperations((v) => !v)}>
+          {sections[2].title}
+        </button>
+        {openOperations ? (
+          <div className="submenu">
+            {sections[2].items.map((item) => (
+              <NavLink key={item.to} to={item.to} className="menu-link sub">
+                {item.label}
+              </NavLink>
+            ))}
           </div>
         ) : null}
       </nav>

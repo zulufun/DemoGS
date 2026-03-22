@@ -8,13 +8,17 @@ import { AuditLogPage } from './pages/AuditLogPage'
 import { UsersPage } from './pages/UsersPage'
 import { ChangePasswordPage } from './pages/ChangePasswordPage'
 import { NotFoundPage } from './pages/NotFoundPage'
+import { OperationsTaskPage } from './pages/OperationsTaskPage'
+import { GateLogPage } from './pages/GateLogPage'
 import { ProtectedRoute } from './routes/ProtectedRoute'
 import { AdminRoute } from './routes/AdminRoute'
+import { SupabaseStatusButton } from './components/common/SupabaseStatusButton.tsx'
 
 function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
+        <SupabaseStatusButton />
         <Routes>
           <Route path="/login" element={<LoginPage />} />
 
@@ -23,16 +27,18 @@ function App() {
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/monitoring/audit-log" element={<AuditLogPage />} />
+              <Route path="/operations/tasks" element={<OperationsTaskPage />} />
+              <Route path="/operations/gate-logs" element={<GateLogPage />} />
               <Route path="/accounts/change-password" element={<ChangePasswordPage />} />
 
               <Route element={<AdminRoute />}>
                 <Route path="/monitoring/prtg" element={<MonitoringPrtgPage />} />
                 <Route path="/accounts/users" element={<UsersPage />} />
               </Route>
+
+              <Route path="*" element={<NotFoundPage />} />
             </Route>
           </Route>
-
-          <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>
