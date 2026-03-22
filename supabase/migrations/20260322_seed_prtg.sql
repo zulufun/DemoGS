@@ -1,0 +1,3 @@
+-- Intentionally empty.
+-- Theo luong test hien tai: KHONG seed du lieu PRTG.
+-- Ban se them/sua/xoa PRTG server truc tiep tren giao dien sau khi dang nhap.

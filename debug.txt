@@ -1,0 +1,30 @@
+#install supabase
+irm get.scoop.sh | iex
+scoop install supabase
+npm install supabase --save-dev
+--
+npx supabase --version
+----------------------------------
+supabase/migrations/20260322_prtg_auth_columns.sql
+PRTG CRUD + pull data per server implemented
+supabase functions deploy admin-users
+supabase functions deploy prtg-ingest
+npm run build
+
+
+
+supabase link --project-ref ixlektftclaigqqwgahm
+supabase functions deploy admin-users
+supabase functions deploy prtg-ingest
+
+#Khắc phục sau khi code
+supabase db push
+supabase migration new ten_migration
+
+
+##Thông tin đăng nhập
+user:admin@local.dev
+password:Admin@123456
+
+cd frontend; npm run build
+npm run build
