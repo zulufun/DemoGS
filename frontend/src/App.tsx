@@ -12,13 +12,11 @@ import { OperationsTaskPage } from './pages/OperationsTaskPage'
 import { GateLogPage } from './pages/GateLogPage'
 import { ProtectedRoute } from './routes/ProtectedRoute'
 import { AdminRoute } from './routes/AdminRoute'
-import { SupabaseStatusButton } from './components/common/SupabaseStatusButton.tsx'
 
 function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
-        <SupabaseStatusButton />
         <Routes>
           <Route path="/login" element={<LoginPage />} />
 

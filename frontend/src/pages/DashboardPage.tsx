@@ -3,7 +3,6 @@ import { PageHeader } from '../components/common/PageHeader'
 import { RealtimeAlertList } from '../components/dashboard/RealtimeAlertList'
 import { ScoreBar } from '../components/dashboard/ScoreBar'
 import { getLatestAlerts } from '../services/auditService'
-import { supabase } from '../lib/supabase'
 import type { AlertItem } from '../types'
 
 export function DashboardPage() {
@@ -11,29 +10,22 @@ export function DashboardPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    void (async () => {
+    const loadAlerts = async () => {
       try {
         const data = await getLatestAlerts(20)
         setAlerts(data)
       } finally {
         setLoading(false)
       }
-    })()
+    }
 
-    const channel = supabase
-      .channel('alerts-realtime')
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'alerts' },
-        (payload) => {
-          const inserted = payload.new as AlertItem
-          setAlerts((prev) => [inserted, ...prev].slice(0, 20))
-        },
-      )
-      .subscribe()
+    void loadAlerts()
+    const intervalId = window.setInterval(() => {
+      void loadAlerts()
+    }, 10000)
 
     return () => {
-      void supabase.removeChannel(channel)
+      window.clearInterval(intervalId)
     }
   }, [])
 
@@ -51,7 +43,7 @@ export function DashboardPage() {
     <div>
       <PageHeader
         title="Dashboard"
-        subtitle="Score bar và cảnh báo realtime từ Supabase Realtime"
+        subtitle="Score bar và cảnh báo được cập nhật định kỳ"
       />
       {loading ? <p>Đang tải cảnh báo...</p> : null}
       <ScoreBar score={score} />

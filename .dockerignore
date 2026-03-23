@@ -1,0 +1,63 @@
+# Git directories and files
+.git
+.gitignore
+.gitattributes
+
+# Documentation
+*.md
+!README.md
+docs/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+*.sublime-workspace
+*.sublime-project
+
+# Environment files (don't copy to container)
+.env
+.env.local
+.env.*.local
+frontend/.env.local
+backend/.env
+
+# Development files
+logs/
+*.log
+
+# OS files
+Thumbs.db
+.DS_Store
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+venv/
+ENV/
+env/
+
+# Docker
+docker-compose*.yml
+Dockerfile*
+.dockerignore
+
+# Build outputs
+dist/
+build/
+
+# Misc
+LICENSE
+Script-Pull-data/
+docker-elk/

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import type { FormEventHandler } from 'react'
 import { PageHeader } from '../components/common/PageHeader'
-import { supabase } from '../lib/supabase'
+import { apiClient } from '../lib/api'
 
 export function ChangePasswordPage() {
   const [password, setPassword] = useState('')
@@ -24,9 +24,11 @@ export function ChangePasswordPage() {
       return
     }
 
-    const { error: updateError } = await supabase.auth.updateUser({ password })
-    if (updateError) {
-      setError(updateError.message)
+    const response = await apiClient.post<{ message: string }>('/api/auth/change-password', {
+      new_password: password,
+    })
+    if (!response.ok) {
+      setError(response.error ?? 'Không thể đổi mật khẩu')
       return
     }
 

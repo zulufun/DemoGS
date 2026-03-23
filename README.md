@@ -1,94 +1,35 @@
-# PRTG + Supabase + React TypeScript
+# Demo
 
-He thong gom:
-- Frontend React TS.
-- Supabase Auth + Postgres + Realtime.
-- Edge Function lay du lieu PRTG.
+He thong giam sat gom React frontend, FastAPI backend va PostgreSQL.
 
-## 1) Dieu chinh theo yeu cau
-
-- Trang cau hinh PRTG da nam trong dropmenu Cau hinh giam sat: PRTG.
-- Trang User da nam trong dropmenu Tai khoan.
-- Chi admin duoc them/sua/xoa user (khong co chuc nang tu dang ky).
-- Bo toan bo URL/login PRTG trong file env; thong tin PRTG duoc them/sua/xoa tren giao dien trang PRTG.
-
-## 2) Bien moi truong
-
-### Frontend (frontend/.env)
-Chi giu cac bien can thiet:
-- VITE_SUPABASE_URL
-- VITE_SUPABASE_ANON_KEY
-
-Mau tai: frontend/.env.example
-
-### Backend scripts (.env hoac supabase/.env)
-Dung cho bootstrap admin:
-- SUPABASE_URL
-- SUPABASE_SERVICE_ROLE_KEY (hoac SECRET_KEY)
-- BOOTSTRAP_ADMIN_EMAIL
-- BOOTSTRAP_ADMIN_PASSWORD
-- BOOTSTRAP_ADMIN_USERNAME
-
-## 3) Tao bang va tao user admin dau tien (test)
-
-### Buoc 1: Tao bang
-Mo Supabase SQL Editor va chay file:
-- supabase/migrations/20260322_init.sql
-- supabase/migrations/20260322_prtg_auth_columns.sql
-
-### Buoc 2: Tao admin dau tien
-Chay tu thu muc goc D:\code\Demo:
+## Chay nhanh (Docker dev)
 
 ```powershell
-node --env-file=.env supabase/scripts/bootstrap-admin.mjs
+.\dev.ps1 start
 ```
 
-Mac dinh:
-- Email: admin@local.dev
-- Password: Admin@123456
-- Username: admin
+- Frontend: http://localhost:5173
+- Backend API: http://localhost:8000
+- API docs: http://localhost:8000/docs
+- Login mac dinh: admin / admin
 
-Luu y: Dang nhap bang email + password, khong dung username de login.
+## Bien moi truong
 
-## 4) Quan ly PRTG server va lay du lieu
+Project dung 1 file duy nhat o root: `.env`
 
-- Vao menu Cau hinh giam sat > PRTG.
-- Them/sua/xoa PRTG server truc tiep tren giao dien.
-- Co the cau hinh auth theo 1 trong 2 cach:
-	- API Token
-	- Username + Passhash
-- Nhan nut Lay du lieu tai tung dong server de pull theo server do.
-- Nhan nut Dong bo ngay de pull tat ca server active.
-
-## 5) Deploy edge functions dung thu muc
-
-Khong chay lenh trong D:\code\Demo\frontend.
-Chay tai D:\code\Demo:
+## Lenh quan ly nhanh
 
 ```powershell
-supabase link --project-ref ixlektftclaigqqwgahm
-supabase functions deploy admin-users
-supabase functions deploy prtg-ingest
+.\dev.ps1 logs backend
+.\dev.ps1 restart
+.\dev.ps1 stop
+.\dev.ps1 reset
 ```
 
-## 6) Chay frontend
+## Cau truc chinh
 
-### Local
-```powershell
-cd frontend
-npm install
-npm run dev
-```
+- `frontend/`: React + Vite
+- `backend/`: FastAPI + SQLAlchemy
+- `docker-compose.dev.yml`: moi truong dev
+- `docker-elk/`: stack log (neu can)
 
-### Docker Compose
-```powershell
-cd D:\code\Demo
-docker compose -f docker-compose.service.yml up -d --build
-```
-
-Truy cap: http://localhost:5173
-
-## 7) Ghi chu bao mat
-
-- Khong dua SUPABASE_SERVICE_ROLE_KEY vao frontend.
-- admin-users function da kiem tra role admin truoc khi CRUD user.

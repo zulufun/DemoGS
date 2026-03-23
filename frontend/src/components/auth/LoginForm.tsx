@@ -6,7 +6,7 @@ import { useAuth } from '../../context/AuthContext'
 export function LoginForm() {
   const { signIn } = useAuth()
   const navigate = useNavigate()
-  const [email, setEmail] = useState('')
+  const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -17,7 +17,7 @@ export function LoginForm() {
     setError('')
 
     try {
-      await signIn(email, password)
+      await signIn(username, password)
       navigate('/dashboard')
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Đăng nhập thất bại'
@@ -33,13 +33,14 @@ export function LoginForm() {
       <p>Truy cập dashboard giám sát hệ thống Trung tâm dữ liệu.</p>
 
       <label>
-        Email
+        Tên đăng nhập
         <input
-          value={email}
-          onChange={(event) => setEmail(event.target.value)}
-          type="email"
+          value={username}
+          onChange={(event) => setUsername(event.target.value)}
+          type="text"
           required
-          autoComplete="email"
+          autoComplete="username"
+          placeholder="admin"
         />
       </label>
 

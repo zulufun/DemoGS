@@ -21,7 +21,7 @@ export interface PrtgServer {
 }
 
 export interface AuditLog {
-  id: number
+  id: number | string
   source: string
   severity: 'info' | 'warning' | 'critical'
   message: string

@@ -1,30 +1,16 @@
-#install supabase
-irm get.scoop.sh | iex
-scoop install supabase
-npm install supabase --save-dev
---
-npx supabase --version
-----------------------------------
-supabase/migrations/20260322_prtg_auth_columns.sql
-PRTG CRUD + pull data per server implemented
-supabase functions deploy admin-users
-supabase functions deploy prtg-ingest
-npm run build
+cd backend
+python -m venv venv
+venv\Scripts\activate
+pip install -r requirements.txt
+python bootstrap_admin.py      # Tạo admin user
+python main.py                 # Chạy API server
 
 
-
-supabase link --project-ref ixlektftclaigqqwgahm
-supabase functions deploy admin-users
-supabase functions deploy prtg-ingest
-
-#Khắc phục sau khi code
-supabase db push
-supabase migration new ten_migration
+cd frontend
+npm install
+npm run dev                     # Frontend sẽ gọi http://localhost:8000
 
 
 ##Thông tin đăng nhập
-user:admin@local.dev
-password:Admin@123456
-#
-supabase db pull
-supabase db push
+user:admin
+password:admin

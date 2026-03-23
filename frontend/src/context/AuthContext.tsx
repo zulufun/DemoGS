@@ -7,18 +7,31 @@ import {
   useState,
   type ReactNode,
 } from 'react'
-import type { Session, User } from '@supabase/supabase-js'
-import { supabase } from '../lib/supabase'
-import type { UserProfile } from '../types'
+import { apiClient } from '../lib/api'
+import type { UserProfile, UserRole } from '../types'
+
+interface User {
+  id: string
+  username: string
+  email: string
+  role: UserRole
+}
+
+interface ValidateTokenResponse {
+  user_id: string
+  username: string
+  email: string
+  role: UserRole
+}
 
 interface AuthContextValue {
-  session: Session | null
   user: User | null
   profile: UserProfile | null
   loading: boolean
   profileLoading: boolean
   isAdmin: boolean
-  signIn: (email: string, password: string) => Promise<void>
+  token: string | null
+  signIn: (username: string, password: string) => Promise<void>
   signOut: () => Promise<void>
   refreshProfile: (userId?: string) => Promise<void>
 }
@@ -26,15 +39,64 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [session, setSession] = useState<Session | null>(null)
   const [user, setUser] = useState<User | null>(null)
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
   const [profileLoading, setProfileLoading] = useState(false)
+  const [token, setToken] = useState<string | null>(null)
 
-  const refreshProfile = useCallback(async (targetUserId?: string) => {
-    const userId = targetUserId ?? user?.id
-    if (!userId) {
+  // Check if token exists in localStorage and validate it
+  useEffect(() => {
+    const checkAuth = async () => {
+      const storedToken = localStorage.getItem('access_token')
+      
+      if (storedToken) {
+        try {
+          apiClient.setToken(storedToken)
+          const response = await apiClient.get('/api/auth/validate-token')
+          
+          if (response.ok && response.data) {
+            const userData = response.data as ValidateTokenResponse
+            setUser({
+              id: userData.user_id,
+              username: userData.username,
+              email: userData.email,
+              role: userData.role,
+            })
+            setToken(storedToken)
+            setProfile({
+              id: userData.user_id,
+              username: userData.username,
+              role: userData.role,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            })
+          } else {
+            // Token is invalid, clear it
+            localStorage.removeItem('access_token')
+            apiClient.clearToken()
+            setUser(null)
+            setToken(null)
+            setProfile(null)
+          }
+        } catch (error) {
+          console.error('Auth validation failed:', error)
+          localStorage.removeItem('access_token')
+          apiClient.clearToken()
+          setUser(null)
+          setToken(null)
+          setProfile(null)
+        }
+      }
+      
+      setLoading(false)
+    }
+
+    checkAuth()
+  }, [])
+
+  const refreshProfile = useCallback(async () => {
+    if (!user) {
       setProfile(null)
       setProfileLoading(false)
       return
@@ -42,90 +104,102 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     setProfileLoading(true)
 
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .maybeSingle<UserProfile>()
-
-    if (error) {
+    try {
+      const response = await apiClient.get('/api/auth/validate-token')
+      
+      if (response.ok && response.data) {
+        const userData = response.data as ValidateTokenResponse
+        setProfile({
+          id: userData.user_id,
+          username: userData.username,
+          role: userData.role,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+      } else {
+        setProfile(null)
+      }
+    } catch (error) {
       console.error('Cannot load profile', error)
       setProfile(null)
+    } finally {
       setProfileLoading(false)
-      return
     }
+  }, [user])
 
-    setProfile(data ?? null)
-    setProfileLoading(false)
-  }, [user?.id])
+  const signIn = async (username: string, password: string) => {
+    try {
+      const response = await apiClient.post<{
+        access_token: string
+        token_type: string
+        user_id: string
+        username: string
+        role: UserRole
+      }>('/api/auth/login', { username, password })
 
-  useEffect(() => {
-    let mounted = true
-
-    supabase.auth.getSession().then(({ data }) => {
-      if (!mounted) return
-      setSession(data.session)
-      setUser(data.session?.user ?? null)
-      setLoading(false)
-
-      if (data.session?.user) {
-        void refreshProfile(data.session.user.id)
-      } else {
-        setProfileLoading(false)
+      if (!response.ok || !response.data) {
+        throw new Error(response.error || 'Login failed')
       }
-    })
 
-    const { data: authListener } = supabase.auth.onAuthStateChange(
-      (_event, newSession) => {
-        setSession(newSession)
-        setUser(newSession?.user ?? null)
-        if (newSession?.user) {
-          void refreshProfile(newSession.user.id)
-        } else {
-          setProfile(null)
-          setProfileLoading(false)
-        }
-
-        setLoading(false)
-      },
-    )
-
-    return () => {
-      mounted = false
-      authListener.subscription.unsubscribe()
+      const { access_token, user_id, username: user_username, role } = response.data
+      
+      apiClient.setToken(access_token)
+      setToken(access_token)
+      
+      const newUser: User = {
+        id: user_id,
+        username: user_username,
+        email: username, // Backend doesn't return email on login, use username
+        role,
+      }
+      
+      setUser(newUser)
+      setProfile({
+        id: user_id,
+        username: user_username,
+        role,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+    } catch (error) {
+      apiClient.clearToken()
+      setToken(null)
+      setUser(null)
+      setProfile(null)
+      throw error instanceof Error ? error : new Error('Login failed')
     }
-  }, [refreshProfile])
-
-  const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) throw error
   }
 
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut()
-    if (error) throw error
+    try {
+      apiClient.clearToken()
+      setToken(null)
+      setUser(null)
+      setProfile(null)
+      setLoading(false)
+    } catch (error) {
+      console.error('Sign out error:', error)
+      throw error instanceof Error ? error : new Error('Sign out failed')
+    }
   }
 
   const isAdmin = useMemo(() => {
-    const metadataRole =
-      typeof user?.user_metadata?.role === 'string' ? user.user_metadata.role : null
-
-    return profile?.role === 'admin' || metadataRole === 'admin'
-  }, [profile?.role, user?.user_metadata])
+    return profile?.role === 'admin'
+  }, [profile?.role])
 
   const value = useMemo(
     () => ({
-      session,
       user,
       profile,
       loading,
       profileLoading,
       isAdmin,
+      token,
       signIn,
       signOut,
       refreshProfile,
     }),
-    [session, user, profile, loading, profileLoading, isAdmin, refreshProfile],
+    [user, profile, loading, profileLoading, isAdmin, token, refreshProfile],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
