@@ -20,6 +20,15 @@ services:
       retries: 5
     networks:
       - demo-network
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '1'
+          memory: 1G
 
   # Python FastAPI Backend
   backend:
@@ -27,7 +36,7 @@ services:
       context: ./backend
       dockerfile: Dockerfile.dev
     container_name: demo-backend-dev
-    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     environment:
       DATABASE_URL: ${DATABASE_URL}
       SECRET_KEY: ${SECRET_KEY}
@@ -49,18 +58,23 @@ services:
     networks:
       - demo-network
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '1'
+          memory: 1G
 
   # React Frontend (Vite Dev Server)
   frontend:
     image: node:20-alpine
     container_name: demo-frontend-dev
     working_dir: /app
-    command: sh -c "npm install && npm run dev"
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0 --port 5173"
     environment:
       VITE_BACKEND_URL: ${VITE_BACKEND_URL:-http://localhost:8000}
-      VITE_ELASTICSEARCH_URL: ${ELASTICSEARCH_URL:-http://localhost:9200}
-      VITE_ELASTICSEARCH_USERNAME: ${ELASTICSEARCH_USERNAME:-elastic}
-      VITE_ELASTICSEARCH_PASSWORD: ${ELASTICSEARCH_PASSWORD:-changeme}
     ports:
       - "5173:5173"
     volumes:
@@ -71,75 +85,14 @@ services:
     networks:
       - demo-network
     restart: unless-stopped
-
-  # Redis Cache & Session Store
-  redis:
-    image: redis:7-alpine
-    container_name: demo-redis-dev
-    ports:
-      - "6379:6379"
-    command: redis-server --appendonly yes
-    volumes:
-      - redis_data_dev:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - demo-network
-    restart: unless-stopped
-
-  # Kafka Broker for Log Streaming
-  kafka:
-    image: confluentinc/cp-kafka:7.5.0
-    container_name: demo-kafka-dev
-    ports:
-      - "9092:9092"
-      - "9101:9101"
-    environment:
-      KAFKA_BROKER_ID: 1
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
-      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
-      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
-      KAFKA_JMX_PORT: 9101
-      KAFKA_JMX_HOSTNAME: localhost
-      CLUSTER_ID: 'MkQkMDA4NTI1NzQ1OTQ0NzA4Nw'
-      KAFKA_PROCESS_ROLES: 'broker,controller'
-      KAFKA_NODE_ID: 1
-      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@kafka:29093'
-      KAFKA_LISTENERS: 'PLAINTEXT://kafka:29092,CONTROLLER://kafka:29093,PLAINTEXT_HOST://0.0.0.0:9092'
-      KAFKA_INTER_BROKER_LISTENER_NAME: 'PLAINTEXT'
-      KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
-    volumes:
-      - kafka_data_dev:/var/lib/kafka/data
-    healthcheck:
-      test: ["CMD", "kafka-broker-api-versions.sh", "--bootstrap-server", "localhost:9092"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - demo-network
-    restart: unless-stopped
-
-  # Zookeeper for Kafka coordination (for older versions)
-  zookeeper:
-    image: confluentinc/cp-zookeeper:7.5.0
-    container_name: demo-zookeeper-dev
-    environment:
-      ZOOKEEPER_CLIENT_PORT: 2181
-      ZOOKEEPER_TICK_TIME: 2000
-    ports:
-      - "2181:2181"
-    volumes:
-      - zookeeper_data_dev:/var/lib/zookeeper/data
-      - zookeeper_logs_dev:/var/lib/zookeeper/log
-    networks:
-      - demo-network
-    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
 
 networks:
   demo-network:
@@ -147,12 +100,4 @@ networks:
 
 volumes:
   postgres_data_dev:
-    driver: local
-  redis_data_dev:
-    driver: local
-  kafka_data_dev:
-    driver: local
-  zookeeper_data_dev:
-    driver: local
-  zookeeper_logs_dev:
     driver: local

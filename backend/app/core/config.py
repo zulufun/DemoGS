@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     )
     
     # Database
-    DATABASE_URL: str = "postgresql://postgres:postgres@localhost:5432/demo"
+    DATABASE_URL: str = "postgresql://postgres:postgres@postgres:5432/demo"
     
     # JWT
     SECRET_KEY: str = "your-secret-key-change-this-in-production"
@@ -34,20 +34,6 @@ class Settings(BaseSettings):
     ADMIN_USERNAME: str = "admin"
     ADMIN_PASSWORD: str = "changeme"
     ADMIN_EMAIL: str = "admin@example.com"
-    
-    # Redis
-    REDIS_URL: str = "redis://redis:6379/0"
-    
-    # Kafka
-    KAFKA_BOOTSTRAP_SERVERS: str = "kafka:9092"
-    KAFKA_LOG_TOPIC: str = "audit-logs"
-    KAFKA_BATCH_SIZE: int = 100
-    KAFKA_BATCH_TIMEOUT_MS: int = 5000
-    
-    # Elasticsearch
-    ELASTICSEARCH_URL: str = "http://elasticsearch:9200"
-    ELASTICSEARCH_USERNAME: str = "elastic"
-    ELASTICSEARCH_PASSWORD: str = "elastic"
     
     def get_cors_origins(self) -> List[str]:
         """Parse CORS origins from comma-separated string"""

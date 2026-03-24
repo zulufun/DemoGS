@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useWebSocketLogs } from '../hooks/useWebSocketLogs';
-import { useAuth } from '../context/AuthContext';
+import { useWebSocketLogs } from '../../hooks/useWebSocketLogs';
+import { useAuth } from '../../context/AuthContext';
 
 interface RealtimeLogsDisplayProps {
   maxMessagesPerSecond?: number;
@@ -123,16 +123,16 @@ export const RealtimeLogsDisplay: React.FC<RealtimeLogsDisplayProps> = ({
       {showStats && (
         <div className="bg-gray-100 border-b p-3 grid grid-cols-5 gap-4 text-sm">
           <div>
-            <span className="font-semibold">Info:</span> {logs.filter(l => l.level?.toLowerCase() === 'information').length}
+            <span className="font-semibold">Info:</span> {logs.filter((l: any) => l.level?.toLowerCase() === 'information').length}
           </div>
           <div>
-            <span className="font-semibold">Warning:</span> {logs.filter(l => l.level?.toLowerCase() === 'warning').length}
+            <span className="font-semibold">Warning:</span> {logs.filter((l: any) => l.level?.toLowerCase() === 'warning').length}
           </div>
           <div>
-            <span className="font-semibold">Error:</span> {logs.filter(l => l.level?.toLowerCase() === 'error').length}
+            <span className="font-semibold">Error:</span> {logs.filter((l: any) => l.level?.toLowerCase() === 'error').length}
           </div>
           <div>
-            <span className="font-semibold">Critical:</span> {logs.filter(l => l.level?.toLowerCase() === 'critical').length}
+            <span className="font-semibold">Critical:</span> {logs.filter((l: any) => l.level?.toLowerCase() === 'critical').length}
           </div>
           <div>
             <span className="font-semibold">Rate:</span> {queuedMessages > 50 ? '🔴 HIGH' : queuedMessages > 20 ? '🟡 MED' : '🟢 LOW'}
@@ -148,7 +148,7 @@ export const RealtimeLogsDisplay: React.FC<RealtimeLogsDisplayProps> = ({
           </div>
         ) : (
           <div className="divide-y">
-            {logs.map((log, index) => (
+            {logs.map((log: any, index: number) => (
               <div key={index} className={`p-3 ${getSeverityColor(log.level)}`}>
                 <div className="flex justify-between items-start gap-4">
                   <div className="flex-1">

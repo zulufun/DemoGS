@@ -21,9 +21,9 @@ export const useWebSocketLogs = (
   
   const wsRef = useRef<WebSocket | null>(null);
   const messageQueueRef = useRef<LogUpdate[]>([]);
-  const processQueueRef = useRef<NodeJS.Timeout | null>(null);
+  const processQueueRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const messageCountRef = useRef<number>(0);
-  const secondTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const secondTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   
   const maxMessages = options.maxMessagesPerSecond || 60; // 60 messages/sec default
   const severityFilter = options.severityFilter;
