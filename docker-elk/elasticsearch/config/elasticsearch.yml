@@ -1,0 +1,15 @@
+---
+## Default Elasticsearch configuration from Elasticsearch base image.
+## https://github.com/elastic/elasticsearch/blob/main/distribution/docker/src/docker/config/elasticsearch.yml
+#
+cluster.name: docker-cluster
+network.host: 0.0.0.0
+
+xpack.license.self_generated.type: trial
+xpack.security.enabled: true
+
+# Allow local frontend to query Elasticsearch directly during development.
+http.cors.enabled: true
+http.cors.allow-origin: "http://localhost:5173,http://127.0.0.1:5173,http://localhost:4173,http://127.0.0.1:4173"
+http.cors.allow-headers: "Authorization,Content-Type,X-Requested-With"
+http.cors.allow-methods: "OPTIONS,HEAD,GET,POST"

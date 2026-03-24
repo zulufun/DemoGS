@@ -1,0 +1,8 @@
+docker builder prune -af
+docker compose build --pull --no-cache
+docker compose up -d
+##setup palo alto
+
+cd d:\code\Demo\docker-elk
+docker compose up -d logstash
+Nếu stack chưa chạy: docker compose up -d
