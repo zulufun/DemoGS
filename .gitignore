@@ -17,7 +17,7 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
+/lib/
 lib64/
 parts/
 sdist/
@@ -33,6 +33,10 @@ venv/
 ENV/
 env/
 .venv
+
+# Keep frontend client library code tracked
+!frontend/src/lib/
+!frontend/src/lib/*.ts
 
 # IDEs
 .vscode/
