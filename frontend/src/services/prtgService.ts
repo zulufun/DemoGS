@@ -1,5 +1,6 @@
 import { apiClient } from '../lib/api'
-import type { PrtgServer } from '../types'
+import { buildQueryString } from '../lib/api'
+import type { PrtgLiveSummary, PrtgServer } from '../types'
 
 export async function getPrtgServers() {
   const response = await apiClient.get<PrtgServer[]>('/api/prtg/')
@@ -39,5 +40,26 @@ export async function syncPrtgNow(serverId?: string) {
   // Note: This would require a separate endpoint in the backend to trigger PRTG sync
   // For now, this is a placeholder that needs implementation in the backend
   throw new Error('PRTG sync not yet implemented in Python backend')
+}
+
+interface PrtgLiveSummaryOptions {
+  server_id?: string
+  base_url?: string
+  username?: string
+  passhash?: string
+  api_token?: string
+  count?: number
+}
+
+export async function getPrtgLiveSummary(options: PrtgLiveSummaryOptions = {}) {
+  const query = buildQueryString(options as Record<string, unknown>)
+  const endpoint = query ? `/api/prtg/live/summary?${query}` : '/api/prtg/live/summary'
+  const response = await apiClient.get<PrtgLiveSummary>(endpoint)
+
+  if (!response.ok || !response.data) {
+    throw new Error(response.error || 'Cannot load live PRTG data')
+  }
+
+  return response.data
 }
 

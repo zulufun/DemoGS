@@ -1,166 +1,126 @@
 import { useEffect, useState } from 'react'
-import type { FormEvent } from 'react'
 import { PageHeader } from '../components/common/PageHeader'
-import { deletePrtgServer, getPrtgServers, syncPrtgNow, upsertPrtgServer } from '../services/prtgService'
-import type { PrtgServer } from '../types'
+import { getPrtgLiveSummary } from '../services/prtgService'
+import type { PrtgLiveSummary } from '../types'
 
-const emptyForm = {
-  id: '',
-  name: '',
-  base_url: '',
-  api_token: '',
-  username: '',
-  passhash: '',
-  is_active: true,
+const prtgConnection = {
+  base_url: import.meta.env.VITE_PRTG_URL || 'http://10.1.0.2',
+  username: import.meta.env.VITE_PRTG_USERNAME || 'tt6',
+  passhash: import.meta.env.VITE_PRTG_PASSHASH || '1066006246',
+  count: Number(import.meta.env.VITE_PRTG_COUNT || 2000),
+}
+
+function maskPasshash(value: string) {
+  if (!value) return '-'
+  if (value.length <= 4) return '****'
+  return `${value.slice(0, 2)}******${value.slice(-2)}`
 }
 
 export function MonitoringPrtgPage() {
-  const [servers, setServers] = useState<PrtgServer[]>([])
-  const [form, setForm] = useState(emptyForm)
+  const [summary, setSummary] = useState<PrtgLiveSummary | null>(null)
+  const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState('')
 
-  const loadServers = async () => {
-    const data = await getPrtgServers()
-    setServers(data)
+  const loadLiveData = async () => {
+    try {
+      const data = await getPrtgLiveSummary(prtgConnection)
+      setSummary(data)
+      setMessage('Đang đồng bộ live data từ PRTG HTTP API thành công')
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Không thể đọc dữ liệu live từ PRTG')
+    } finally {
+      setLoading(false)
+    }
   }
 
   useEffect(() => {
-    void loadServers()
+    void loadLiveData()
+    const intervalId = window.setInterval(() => {
+      void loadLiveData()
+    }, 15000)
+
+    return () => {
+      window.clearInterval(intervalId)
+    }
   }, [])
-
-  const saveServer = async (event: FormEvent) => {
-    event.preventDefault()
-    await upsertPrtgServer(form)
-    setMessage('Đã lưu cấu hình PRTG server')
-    setForm(emptyForm)
-    await loadServers()
-  }
-
-  const editServer = (server: PrtgServer) => {
-    setForm({
-      id: server.id,
-      name: server.name,
-      base_url: server.base_url,
-      api_token: server.api_token ?? '',
-      username: server.username ?? '',
-      passhash: server.passhash ?? '',
-      is_active: server.is_active,
-    })
-  }
-
-  const removeServer = async (id: string) => {
-    await deletePrtgServer(id)
-    await loadServers()
-  }
-
-  const runSync = async () => {
-    await syncPrtgNow()
-    setMessage('Đã lấy dữ liệu từ tất cả PRTG server active')
-  }
-
-  const runSyncOne = async (serverId: string) => {
-    await syncPrtgNow(serverId)
-    setMessage('Đã lấy dữ liệu từ PRTG server được chọn')
-  }
 
   return (
     <div>
       <PageHeader
-        title="Cấu hình giám sát / PRTG"
-        subtitle="Thêm sửa xóa thông tin PRTG server và đồng bộ dữ liệu"
-        action={<button onClick={runSync}>Đồng bộ ngay</button>}
+        title="Giám sát / PRTG Live"
+        subtitle="Đọc dữ liệu realtime từ PRTG HTTP API ở chế độ chỉ xem"
+        action={<button onClick={() => void loadLiveData()}>Làm mới</button>}
       />
 
-      <form className="panel form-grid" onSubmit={saveServer}>
-        <label>
-          Tên server
-          <input
-            value={form.name}
-            onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))}
-            required
-          />
-        </label>
-
-        <label>
-          Base URL
-          <input
-            value={form.base_url}
-            onChange={(event) => setForm((prev) => ({ ...prev, base_url: event.target.value }))}
-            required
-          />
-        </label>
-
-        <label>
-          API Token
-          <input
-            value={form.api_token}
-            onChange={(event) => setForm((prev) => ({ ...prev, api_token: event.target.value }))}
-            placeholder="Neu dung API token"
-          />
-        </label>
-
-        <label>
-          Username (optional)
-          <input
-            value={form.username}
-            onChange={(event) => setForm((prev) => ({ ...prev, username: event.target.value }))}
-            placeholder="Neu dung username/passhash"
-          />
-        </label>
-
-        <label>
-          Passhash (optional)
-          <input
-            value={form.passhash}
-            onChange={(event) => setForm((prev) => ({ ...prev, passhash: event.target.value }))}
-            placeholder="PRTG passhash"
-          />
-        </label>
-
-        <label className="inline-check">
-          <input
-            type="checkbox"
-            checked={form.is_active}
-            onChange={(event) => setForm((prev) => ({ ...prev, is_active: event.target.checked }))}
-          />
-          Kích hoạt
-        </label>
-
-        <button type="submit">{form.id ? 'Cập nhật' : 'Tạo mới'}</button>
-      </form>
+      <section className="panel">
+        <h2>Thông tin kết nối PRTG server</h2>
+        <table className="table">
+          <tbody>
+            <tr>
+              <th>Base URL</th>
+              <td>{prtgConnection.base_url}</td>
+            </tr>
+            <tr>
+              <th>Username</th>
+              <td>{prtgConnection.username}</td>
+            </tr>
+            <tr>
+              <th>Passhash</th>
+              <td>{maskPasshash(prtgConnection.passhash)}</td>
+            </tr>
+            <tr>
+              <th>Endpoint</th>
+              <td>/api/table.json?content=sensors&columns=objid,sensor,device,status,message,lastvalue,lastup,priority</td>
+            </tr>
+            <tr>
+              <th>Auth mode</th>
+              <td>username + passhash (stateless per request)</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
 
       {message ? <p>{message}</p> : null}
+      {loading ? <p>Đang tải dữ liệu PRTG live...</p> : null}
 
       <section className="panel">
-        <h2>Danh sách PRTG server</h2>
-        <table className="table">
+        <h2>Dữ liệu live sensors từ PRTG</h2>
+        {summary ? (
+          <p className="prtg-meta">
+            Version: {summary.source.prtg_version || 'N/A'} | Returned: {summary.source.returned_count}/
+            {summary.source.total_count} | Updated:{' '}
+            {new Date(summary.source.fetched_at).toLocaleString('vi-VN')}
+          </p>
+        ) : null}
+        {summary?.source.is_truncated ? (
+          <p className="error-text">
+            Kết quả hiện đang bị cắt bớt ({summary.source.returned_count}/{summary.source.total_count}).
+            Hãy tăng VITE_PRTG_COUNT để lấy đủ dữ liệu.
+          </p>
+        ) : null}
+
+        <table className="table prtg-table">
           <thead>
             <tr>
-              <th>Tên</th>
-              <th>URL</th>
-              <th>Auth</th>
-              <th>Trạng thái</th>
-              <th>Hành động</th>
+              <th>Sensor</th>
+              <th>Device</th>
+              <th>Status</th>
+              <th>Priority</th>
+              <th>Last Value</th>
+              <th>Last Up</th>
+              <th>Message</th>
             </tr>
           </thead>
           <tbody>
-            {servers.map((server) => (
-              <tr key={server.id}>
-                <td>{server.name}</td>
-                <td>{server.base_url}</td>
-                <td>
-                  {server.api_token
-                    ? 'API Token'
-                    : server.username && server.passhash
-                      ? 'Username + Passhash'
-                      : 'Chua cau hinh'}
-                </td>
-                <td>{server.is_active ? 'Active' : 'Inactive'}</td>
-                <td className="actions">
-                  <button onClick={() => runSyncOne(server.id)}>Lay du lieu</button>
-                  <button onClick={() => editServer(server)}>Sửa</button>
-                  <button onClick={() => removeServer(server.id)}>Xóa</button>
-                </td>
+            {summary?.sensors.map((sensor) => (
+              <tr key={sensor.objid}>
+                <td>{sensor.sensor}</td>
+                <td>{sensor.device}</td>
+                <td>{sensor.status}</td>
+                <td>P{sensor.priority}</td>
+                <td>{sensor.lastvalue || '-'}</td>
+                <td>{sensor.lastup || '-'}</td>
+                <td>{sensor.message || '-'}</td>
               </tr>
             ))}
           </tbody>

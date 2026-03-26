@@ -20,6 +20,40 @@ export interface PrtgServer {
   updated_at: string
 }
 
+export interface PrtgLiveSensor {
+  objid: number
+  sensor: string
+  device: string
+  status: string
+  status_raw: number
+  message: string
+  lastvalue: string
+  lastup: string
+  priority: number
+}
+
+export interface PrtgLiveSummary {
+  source: {
+    server_name: string
+    base_url: string
+    requested_count: number
+    returned_count: number
+    total_count: number
+    is_truncated: boolean
+    prtg_version: string | null
+    fetched_at: string
+  }
+  status_counts: {
+    up: number
+    warning: number
+    down: number
+    other: number
+  }
+  priority_counts: Record<string, number>
+  top_priority_sensors: PrtgLiveSensor[]
+  sensors: PrtgLiveSensor[]
+}
+
 export interface AuditLog {
   id: number | string
   source: string
