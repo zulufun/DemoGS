@@ -53,7 +53,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (storedToken) {
         try {
           apiClient.setToken(storedToken)
-          const response = await apiClient.get('/api/auth/validate-token')
+          const response = await apiClient.post('/api/auth/validate-token')
           
           if (response.ok && response.data) {
             const userData = response.data as ValidateTokenResponse
@@ -105,7 +105,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setProfileLoading(true)
 
     try {
-      const response = await apiClient.get('/api/auth/validate-token')
+      const response = await apiClient.post('/api/auth/validate-token')
       
       if (response.ok && response.data) {
         const userData = response.data as ValidateTokenResponse

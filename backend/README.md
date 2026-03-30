@@ -59,6 +59,14 @@ CORS_ORIGINS=http://localhost:5173,http://localhost:5174
 ADMIN_USERNAME=admin
 ADMIN_PASSWORD=admin
 ADMIN_EMAIL=admin@example.com
+
+# Vertiv Environment Alert
+VERTIV_BASE_URL=http://192.168.1.253
+VERTIV_USERNAME=admin
+VERTIV_PASSWORD=your-password
+VERTIV_STATUS_PATH=/
+VERTIV_VERIFY_SSL=false
+VERTIV_REQUEST_TIMEOUT_SECONDS=15
 ```
 
 ### 4. Create PostgreSQL database
@@ -122,6 +130,10 @@ The API will be available at `http://localhost:8000`
 - `GET /api/prtg/{server_id}` - Get server details
 - `PUT /api/prtg/{server_id}` - Update server
 - `DELETE /api/prtg/{server_id}` - Delete server
+
+### Vertiv Environment Alert (Authenticated)
+
+- `GET /api/vertiv/live/temperature-humidity` - Get latest temperature and humidity
 
 ### Audit Logs
 

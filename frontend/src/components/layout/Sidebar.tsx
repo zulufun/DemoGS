@@ -19,6 +19,7 @@ export function Sidebar() {
         title: 'Cấu hình giám sát',
         items: [
           { to: '/monitoring/prtg', label: 'PRTG', adminOnly: true },
+          { to: '/monitoring/vertiv', label: 'Vertiv Env Alert' },
           { to: '/monitoring/paloalto', label: 'Palo Alto Logs' },
           { to: '/monitoring/audit-log', label: 'Auditlog' },
         ],

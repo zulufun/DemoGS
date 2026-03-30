@@ -35,10 +35,18 @@ class Settings(BaseSettings):
     ADMIN_PASSWORD: str = "changeme"
     ADMIN_EMAIL: str = "admin@example.com"
     
-        # Elasticsearch
-        ELASTICSEARCH_URL: str = "http://elasticsearch:9200"
-        ELASTICSEARCH_USERNAME: str = "elastic"
-        ELASTICSEARCH_PASSWORD: str = "changeme"
+    # Elasticsearch
+    ELASTICSEARCH_URL: str = "http://elasticsearch:9200"
+    ELASTICSEARCH_USERNAME: str = "elastic"
+    ELASTICSEARCH_PASSWORD: str = "changeme"
+
+    # Vertiv Environment Alert
+    VERTIV_BASE_URL: str = "http://192.168.1.253"
+    VERTIV_USERNAME: str = "admin"
+    VERTIV_PASSWORD: str = "Vertiv@123"
+    VERTIV_STATUS_PATH: str = "/"
+    VERTIV_VERIFY_SSL: bool = False
+    VERTIV_REQUEST_TIMEOUT_SECONDS: int = 15
     
     def get_cors_origins(self) -> List[str]:
         """Parse CORS origins from comma-separated string"""

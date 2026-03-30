@@ -41,6 +41,14 @@ class Settings(BaseSettings):
     KAFKA_LOG_TOPIC: str = "audit-logs"
     KAFKA_BATCH_SIZE: int = 100
     KAFKA_BATCH_TIMEOUT_MS: int = 5000
+
+    # Vertiv Environment Alert
+    VERTIV_BASE_URL: str = "http://192.168.1.253"
+    VERTIV_USERNAME: str = ""
+    VERTIV_PASSWORD: str = ""
+    VERTIV_STATUS_PATH: str = "/"
+    VERTIV_VERIFY_SSL: bool = False
+    VERTIV_REQUEST_TIMEOUT_SECONDS: int = 15
     
     def get_cors_origins(self) -> List[str]:
         """Parse CORS origins from comma-separated string"""

@@ -4,6 +4,7 @@ import { AppLayout } from './components/layout/AppLayout'
 import { LoginPage } from './pages/LoginPage'
 import { DashboardPage } from './pages/DashboardPage'
 import { MonitoringPrtgPage } from './pages/MonitoringPrtgPage'
+import { MonitoringVertivPage } from './pages/MonitoringVertivPage'
 import { PaloAltoLogsPage } from './pages/PaloAltoLogsPage'
 import { AuditLogPage } from './pages/AuditLogPage'
 import { UsersPage } from './pages/UsersPage'
@@ -27,6 +28,7 @@ function App() {
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/monitoring/audit-log" element={<AuditLogPage />} />
               <Route path="/monitoring/paloalto" element={<PaloAltoLogsPage />} />
+              <Route path="/monitoring/vertiv" element={<MonitoringVertivPage />} />
               <Route path="/operations/tasks" element={<OperationsTaskPage />} />
               <Route path="/operations/gate-logs" element={<GateLogPage />} />
               <Route path="/accounts/change-password" element={<ChangePasswordPage />} />

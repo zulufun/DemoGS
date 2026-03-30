@@ -8,6 +8,7 @@ from . import alerts
 from . import operations
 from . import gates
 from . import ws_logs
+from . import vertiv
 
 __all__ = [
     "auth",
@@ -18,4 +19,5 @@ __all__ = [
     "operations",
     "gates",
     "ws_logs",
+    "vertiv",
 ]

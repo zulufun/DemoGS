@@ -4,7 +4,8 @@ import { RealtimeAlertList } from '../components/dashboard/RealtimeAlertList'
 import { ScoreBar } from '../components/dashboard/ScoreBar'
 import { getElasticOverview7d, getLatestAlerts } from '../services/auditService'
 import { getPrtgLiveSummary } from '../services/prtgService'
-import type { AlertItem, ElasticOverviewStats, PrtgLiveSummary } from '../types'
+import { getVertivSnapshot } from '../services/vertivService'
+import type { AlertItem, ElasticOverviewStats, PrtgLiveSummary, VertivSnapshot } from '../types'
 
 const prtgBaseUrl = import.meta.env.VITE_PRTG_URL?.trim() || undefined
 const prtgUsername = import.meta.env.VITE_PRTG_USERNAME?.trim() || undefined
@@ -18,6 +19,16 @@ const defaultPrtgSource = {
   count: Number.isFinite(prtgCount) ? prtgCount : 1000,
 }
 
+const vertivBaseUrl = import.meta.env.VITE_VERTIV_BASE_URL?.trim() || undefined
+const vertivUsername = import.meta.env.VITE_VERTIV_USERNAME?.trim() || undefined
+const vertivPassword = import.meta.env.VITE_VERTIV_PASSWORD?.trim() || undefined
+
+const defaultVertivSource = {
+  base_url: vertivBaseUrl,
+  username: vertivUsername,
+  password: vertivPassword,
+}
+
 export function DashboardPage() {
   const [alerts, setAlerts] = useState<AlertItem[]>([])
   const [alertLoading, setAlertLoading] = useState(true)
@@ -27,6 +38,9 @@ export function DashboardPage() {
   const [elasticLoading, setElasticLoading] = useState(true)
   const [elasticError, setElasticError] = useState('')
   const [elasticOverview, setElasticOverview] = useState<ElasticOverviewStats | null>(null)
+  const [vertivLoading, setVertivLoading] = useState(true)
+  const [vertivError, setVertivError] = useState('')
+  const [vertivSnapshot, setVertivSnapshot] = useState<VertivSnapshot | null>(null)
 
   useEffect(() => {
     const loadAlerts = async () => {
@@ -44,6 +58,36 @@ export function DashboardPage() {
     }, 10000)
 
     return () => {
+      window.clearInterval(intervalId)
+    }
+  }, [])
+
+  useEffect(() => {
+    let mounted = true
+
+    const loadVertivLive = async () => {
+      try {
+        const data = await getVertivSnapshot(defaultVertivSource)
+        if (!mounted) return
+        setVertivSnapshot(data)
+        setVertivError('')
+      } catch (error) {
+        if (!mounted) return
+        setVertivError(error instanceof Error ? error.message : 'Khong the tai du lieu Vertiv')
+      } finally {
+        if (mounted) {
+          setVertivLoading(false)
+        }
+      }
+    }
+
+    void loadVertivLive()
+    const intervalId = window.setInterval(() => {
+      void loadVertivLive()
+    }, 30000)
+
+    return () => {
+      mounted = false
       window.clearInterval(intervalId)
     }
   }, [])
@@ -447,6 +491,57 @@ export function DashboardPage() {
                 </tbody>
               </table>
             </section>
+          </>
+        ) : null}
+      </section>
+
+      <section className="panel">
+        <div className="score-line">
+          <h2>Bang tat ca thong so nhiet do va do am (Vertiv)</h2>
+          {vertivSnapshot ? <strong>{vertivSnapshot.summary.total_sensors} points</strong> : null}
+        </div>
+
+        {vertivLoading && !vertivSnapshot ? <p>Dang tai du lieu Vertiv...</p> : null}
+        {vertivError ? <p className="error-text">{vertivError}</p> : null}
+
+        {vertivSnapshot ? (
+          <>
+            <p className="prtg-meta">
+              Endpoint: {vertivSnapshot.source.endpoint} | Cap nhat:{' '}
+              {new Date(vertivSnapshot.source.fetched_at).toLocaleString('vi-VN')} | Nhiet do:{' '}
+              {vertivSnapshot.summary.temperature_count} | Do am: {vertivSnapshot.summary.humidity_count}
+            </p>
+
+            <div className="vertiv-table-wrap">
+              <table className="table vertiv-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Thiet bi</th>
+                    <th>Ten point</th>
+                    <th>Duong dan</th>
+                    <th>Loai</th>
+                    <th>Gia tri</th>
+                    <th>Don vi</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {vertivSnapshot.sensors.map((sensor, index) => (
+                    <tr key={sensor.id || `${sensor.point_path}-${index}`}>
+                      <td>{index + 1}</td>
+                      <td>{sensor.device || '-'}</td>
+                      <td>{sensor.name}</td>
+                      <td>{sensor.point_path}</td>
+                      <td>{sensor.type === 'temperature' ? 'Nhiet do' : 'Do am'}</td>
+                      <td>{sensor.value}</td>
+                      <td>{sensor.unit}</td>
+                      <td>{sensor.status || '-'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </>
         ) : null}
       </section>

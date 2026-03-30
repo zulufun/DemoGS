@@ -539,3 +539,55 @@ button:disabled {
     grid-template-columns: 1fr;
   }
 }
+
+  .vertiv-metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+  }
+
+  .vertiv-metric {
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 14px;
+    background: var(--paper-strong);
+  }
+
+  .vertiv-metric h3 {
+    font-size: 0.9rem;
+    margin-bottom: 8px;
+  }
+
+  .vertiv-metric strong {
+    font-size: clamp(1.4rem, 2.6vw, 2rem);
+  }
+
+  .vertiv-metric.temperature {
+    border-left: 6px solid #c75b12;
+  }
+
+  .vertiv-metric.humidity {
+    border-left: 6px solid #1f7d53;
+  }
+
+  .vertiv-metric.other {
+    border-left: 6px solid #0c8d88;
+  }
+
+  .vertiv-metric p {
+    margin-top: 6px;
+    font-size: 0.9rem;
+  }
+
+  .vertiv-table td:last-child {
+    max-width: 480px;
+    white-space: normal;
+    word-break: break-word;
+  }
+
+  .vertiv-table-wrap {
+    max-height: 520px;
+    overflow: auto;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+  }

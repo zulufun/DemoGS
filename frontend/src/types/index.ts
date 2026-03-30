@@ -139,3 +139,48 @@ export interface GateOpenLog {
   created_at: string
   updated_at: string
 }
+
+export interface VertivAttempt {
+  endpoint: string
+  ok: boolean
+  status_code?: number
+  error?: string
+}
+
+export interface VertivSnapshot {
+  source: {
+    base_url: string
+    endpoint: string
+    fetched_at: string
+    status_code: number
+  }
+  summary: {
+    total_sensors: number
+    temperature_count: number
+    humidity_count: number
+    temperature_avg: number | null
+    humidity_avg: number | null
+  }
+  measurements: {
+    temperature: {
+      value: number | null
+      unit: string
+    }
+    humidity: {
+      value: number | null
+      unit: string
+    }
+  }
+  sensors: Array<{
+    id: string
+    name: string
+    point_path: string
+    device: string
+    type: 'temperature' | 'humidity'
+    value: number
+    unit: string
+    status: string
+    raw: string
+  }>
+  attempts: VertivAttempt[]
+}

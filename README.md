@@ -17,6 +17,21 @@ He thong giam sat gom React frontend, FastAPI backend va PostgreSQL.
 
 Project dung 1 file duy nhat o root: `.env`
 
+Bien moi de lay du lieu Vertiv Environment Alert:
+
+```env
+VERTIV_BASE_URL=http://192.168.1.253
+VERTIV_USERNAME=admin
+VERTIV_PASSWORD=your-password
+VERTIV_STATUS_PATH=/
+VERTIV_VERIFY_SSL=false
+VERTIV_REQUEST_TIMEOUT_SECONDS=15
+
+VITE_VERTIV_BASE_URL=http://192.168.1.253
+VITE_VERTIV_PATH=/
+VITE_VERTIV_REFRESH_MS=30000
+```
+
 ## Lenh quan ly nhanh
 
 ```powershell
