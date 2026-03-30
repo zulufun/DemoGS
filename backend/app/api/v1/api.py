@@ -1,7 +1,7 @@
 """API v1 router that combines all endpoints"""
 
 from fastapi import APIRouter
-from .endpoints import auth, users, audit, prtg, alerts, operations, gates, ws_logs
+from .endpoints import auth, users, audit, prtg, alerts, operations, gates, ws_logs, paloalto
 
 router = APIRouter(prefix="/api")
 
@@ -13,6 +13,7 @@ router.include_router(prtg.router, prefix="/prtg", tags=["prtg"])
 router.include_router(alerts.router, prefix="/alerts", tags=["alerts"])
 router.include_router(operations.router, prefix="/operations/tasks", tags=["operations"])
 router.include_router(gates.router, prefix="/gates", tags=["gates"])
+router.include_router(paloalto.router, prefix="/paloalto", tags=["paloalto"])
 router.include_router(ws_logs.router, tags=["websocket"])
 
 __all__ = ["router"]

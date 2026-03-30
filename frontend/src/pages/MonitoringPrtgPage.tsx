@@ -3,14 +3,19 @@ import { PageHeader } from '../components/common/PageHeader'
 import { getPrtgLiveSummary } from '../services/prtgService'
 import type { PrtgLiveSummary } from '../types'
 
+const prtgBaseUrl = import.meta.env.VITE_PRTG_URL?.trim() || undefined
+const prtgUsername = import.meta.env.VITE_PRTG_USERNAME?.trim() || undefined
+const prtgPasshash = import.meta.env.VITE_PRTG_PASSHASH?.trim() || undefined
+const prtgCount = Number(import.meta.env.VITE_PRTG_COUNT || 1000)
+
 const prtgConnection = {
-  base_url: import.meta.env.VITE_PRTG_URL || 'http://10.1.0.2',
-  username: import.meta.env.VITE_PRTG_USERNAME || 'tt6',
-  passhash: import.meta.env.VITE_PRTG_PASSHASH || '1066006246',
-  count: Number(import.meta.env.VITE_PRTG_COUNT || 2000),
+  base_url: prtgBaseUrl,
+  username: prtgUsername,
+  passhash: prtgPasshash,
+  count: Number.isFinite(prtgCount) ? prtgCount : 1000,
 }
 
-function maskPasshash(value: string) {
+function maskPasshash(value?: string) {
   if (!value) return '-'
   if (value.length <= 4) return '****'
   return `${value.slice(0, 2)}******${value.slice(-2)}`
@@ -58,11 +63,11 @@ export function MonitoringPrtgPage() {
           <tbody>
             <tr>
               <th>Base URL</th>
-              <td>{prtgConnection.base_url}</td>
+              <td>{prtgConnection.base_url || '-'}</td>
             </tr>
             <tr>
               <th>Username</th>
-              <td>{prtgConnection.username}</td>
+              <td>{prtgConnection.username || '-'}</td>
             </tr>
             <tr>
               <th>Passhash</th>

@@ -35,6 +35,11 @@ class Settings(BaseSettings):
     ADMIN_PASSWORD: str = "changeme"
     ADMIN_EMAIL: str = "admin@example.com"
     
+        # Elasticsearch
+        ELASTICSEARCH_URL: str = "http://elasticsearch:9200"
+        ELASTICSEARCH_USERNAME: str = "elastic"
+        ELASTICSEARCH_PASSWORD: str = "changeme"
+    
     def get_cors_origins(self) -> List[str]:
         """Parse CORS origins from comma-separated string"""
         return [origin.strip() for origin in self.CORS_ORIGINS.split(",") if origin.strip()]

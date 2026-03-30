@@ -2,15 +2,20 @@ import { useEffect, useMemo, useState } from 'react'
 import { PageHeader } from '../components/common/PageHeader'
 import { RealtimeAlertList } from '../components/dashboard/RealtimeAlertList'
 import { ScoreBar } from '../components/dashboard/ScoreBar'
-import { getLatestAlerts } from '../services/auditService'
+import { getElasticOverview7d, getLatestAlerts } from '../services/auditService'
 import { getPrtgLiveSummary } from '../services/prtgService'
-import type { AlertItem, PrtgLiveSummary } from '../types'
+import type { AlertItem, ElasticOverviewStats, PrtgLiveSummary } from '../types'
+
+const prtgBaseUrl = import.meta.env.VITE_PRTG_URL?.trim() || undefined
+const prtgUsername = import.meta.env.VITE_PRTG_USERNAME?.trim() || undefined
+const prtgPasshash = import.meta.env.VITE_PRTG_PASSHASH?.trim() || undefined
+const prtgCount = Number(import.meta.env.VITE_PRTG_COUNT || 1000)
 
 const defaultPrtgSource = {
-  base_url: import.meta.env.VITE_PRTG_URL || 'http://10.1.0.2',
-  username: import.meta.env.VITE_PRTG_USERNAME || 'tt6',
-  passhash: import.meta.env.VITE_PRTG_PASSHASH || '1066006246',
-  count: Number(import.meta.env.VITE_PRTG_COUNT || 2000),
+  base_url: prtgBaseUrl,
+  username: prtgUsername,
+  passhash: prtgPasshash,
+  count: Number.isFinite(prtgCount) ? prtgCount : 1000,
 }
 
 export function DashboardPage() {
@@ -19,6 +24,9 @@ export function DashboardPage() {
   const [prtgLoading, setPrtgLoading] = useState(true)
   const [prtgError, setPrtgError] = useState('')
   const [prtgSummary, setPrtgSummary] = useState<PrtgLiveSummary | null>(null)
+  const [elasticLoading, setElasticLoading] = useState(true)
+  const [elasticError, setElasticError] = useState('')
+  const [elasticOverview, setElasticOverview] = useState<ElasticOverviewStats | null>(null)
 
   useEffect(() => {
     const loadAlerts = async () => {
@@ -70,6 +78,36 @@ export function DashboardPage() {
     }
   }, [])
 
+  useEffect(() => {
+    let mounted = true
+
+    const loadElasticOverview = async () => {
+      try {
+        const data = await getElasticOverview7d()
+        if (!mounted) return
+        setElasticOverview(data)
+        setElasticError('')
+      } catch (error) {
+        if (!mounted) return
+        setElasticError(error instanceof Error ? error.message : 'Không thể tải thống kê Elastic 7 ngày')
+      } finally {
+        if (mounted) {
+          setElasticLoading(false)
+        }
+      }
+    }
+
+    void loadElasticOverview()
+    const intervalId = window.setInterval(() => {
+      void loadElasticOverview()
+    }, 30000)
+
+    return () => {
+      mounted = false
+      window.clearInterval(intervalId)
+    }
+  }, [])
+
   const score = useMemo(() => {
     const alertPenalty = alerts.reduce((acc, item) => {
       if (item.severity === 'critical') return acc + 20
@@ -86,8 +124,12 @@ export function DashboardPage() {
         )
       : 0
 
-    return Math.max(0, 100 - alertPenalty - livePenalty)
-  }, [alerts, prtgSummary])
+    const elasticPenalty = elasticOverview
+      ? Math.min(40, elasticOverview.critical_7d * 0.3 + elasticOverview.warning_7d * 0.1)
+      : 0
+
+    return Math.max(0, Math.round(100 - alertPenalty - livePenalty - elasticPenalty))
+  }, [alerts, prtgSummary, elasticOverview])
 
   const totalSensors = prtgSummary ? prtgSummary.sensors.length : 0
   const statusRows = prtgSummary
@@ -105,6 +147,66 @@ export function DashboardPage() {
         .map(([priority, count]) => ({ priority, count }))
     : []
 
+  const unifiedSeverityRows = useMemo(() => {
+    const prtgCritical = prtgSummary?.status_counts.down ?? 0
+    const prtgWarning = prtgSummary?.status_counts.warning ?? 0
+    const prtgInfo = (prtgSummary?.status_counts.up ?? 0) + (prtgSummary?.status_counts.other ?? 0)
+
+    const elasticCritical = elasticOverview?.critical_7d ?? 0
+    const elasticWarning = elasticOverview?.warning_7d ?? 0
+    const elasticInfo = Math.max(
+      0,
+      (elasticOverview?.total_events_7d ?? 0) - (elasticOverview?.alerts_7d ?? 0),
+    )
+
+    return [
+      {
+        key: 'critical',
+        label: 'Critical',
+        prtg: prtgCritical,
+        elastic: elasticCritical,
+      },
+      {
+        key: 'warning',
+        label: 'Warning',
+        prtg: prtgWarning,
+        elastic: elasticWarning,
+      },
+      {
+        key: 'info',
+        label: 'Info/Other',
+        prtg: prtgInfo,
+        elastic: elasticInfo,
+      },
+    ]
+  }, [prtgSummary, elasticOverview])
+
+  const unifiedScale = useMemo(() => {
+    return Math.max(
+      1,
+      ...unifiedSeverityRows.map((item) => Math.max(item.prtg, item.elastic)),
+    )
+  }, [unifiedSeverityRows])
+
+  const elasticDailyRows = useMemo(() => {
+    if (!elasticOverview) return []
+    const snapshotRisk = (prtgSummary?.status_counts.down ?? 0) + (prtgSummary?.status_counts.warning ?? 0)
+
+    return elasticOverview.daily.map((day) => ({
+      date: new Date(day.date),
+      elasticAlerts: day.alerts,
+      elasticTotal: day.total,
+      prtgRiskSnapshot: snapshotRisk,
+    }))
+  }, [elasticOverview, prtgSummary])
+
+  const dailyScale = useMemo(() => {
+    return Math.max(
+      1,
+      ...elasticDailyRows.map((item) => Math.max(item.elasticAlerts, item.elasticTotal, item.prtgRiskSnapshot)),
+    )
+  }, [elasticDailyRows])
+
   return (
     <div>
       <PageHeader
@@ -113,6 +215,116 @@ export function DashboardPage() {
       />
       {alertLoading ? <p>Đang tải cảnh báo...</p> : null}
       <ScoreBar score={score} />
+
+      <section className="panel">
+        <div className="score-line">
+          <h2>Tổng quan log Elastic (7 ngày)</h2>
+          {elasticOverview ? <strong>{elasticOverview.total_events_7d} sự kiện</strong> : null}
+        </div>
+
+        {elasticLoading && !elasticOverview ? <p>Đang tải số liệu Elasticsearch...</p> : null}
+        {elasticError ? <p className="error-text">{elasticError}</p> : null}
+
+        {elasticOverview ? (
+          <>
+            <div className="prtg-metrics">
+              <article className="prtg-metric other">
+                <h3>Hệ thống thu log</h3>
+                <strong>{elasticOverview.systems_count}</strong>
+              </article>
+              <article className="prtg-metric good">
+                <h3>Tổng sự kiện 7 ngày</h3>
+                <strong>{elasticOverview.total_events_7d}</strong>
+              </article>
+              <article className="prtg-metric warn">
+                <h3>Cảnh báo 7 ngày</h3>
+                <strong>{elasticOverview.alerts_7d}</strong>
+              </article>
+              <article className="prtg-metric danger">
+                <h3>Sự kiện nghiêm trọng</h3>
+                <strong>{elasticOverview.critical_7d}</strong>
+              </article>
+            </div>
+
+            {elasticOverview.top_hosts.length > 0 ? (
+              <p className="prtg-meta">
+                Nguồn log tiêu biểu:{' '}
+                {elasticOverview.top_hosts
+                  .map((item) => `${item.host} (${item.count})`)
+                  .join(' | ')}
+              </p>
+            ) : null}
+          </>
+        ) : null}
+      </section>
+
+      <section className="panel">
+        <h2>Biểu đồ hình thái cảnh báo tổng hợp</h2>
+        <div className="prtg-grid">
+          <section className="prtg-chart-block">
+            <h3>So sánh mức độ theo nguồn (PRTG vs Elastic 7 ngày)</h3>
+            <ul className="bar-list dual-bar-list">
+              {unifiedSeverityRows.map((row) => {
+                const prtgWidth = (row.prtg / unifiedScale) * 100
+                const elasticWidth = (row.elastic / unifiedScale) * 100
+
+                return (
+                  <li key={row.key} className="dual-bar-item">
+                    <span>{row.label}</span>
+                    <div className="dual-bar-column">
+                      <div className="dual-bar-row">
+                        <em>PRTG</em>
+                        <div className="bar-track">
+                          <div className={`bar-fill ${row.key === 'critical' ? 'danger' : row.key === 'warning' ? 'warn' : 'other'}`} style={{ width: `${Math.max(prtgWidth, row.prtg > 0 ? 4 : 0)}%` }} />
+                        </div>
+                        <strong>{row.prtg}</strong>
+                      </div>
+                      <div className="dual-bar-row">
+                        <em>Elastic</em>
+                        <div className="bar-track">
+                          <div className={`bar-fill ${row.key === 'critical' ? 'danger' : row.key === 'warning' ? 'warn' : 'good'}`} style={{ width: `${Math.max(elasticWidth, row.elastic > 0 ? 4 : 0)}%` }} />
+                        </div>
+                        <strong>{row.elastic}</strong>
+                      </div>
+                    </div>
+                  </li>
+                )
+              })}
+            </ul>
+          </section>
+
+          <section className="prtg-chart-block">
+            <h3>Xu hướng 7 ngày: Elastic alerts và mức rủi ro PRTG hiện tại</h3>
+            <ul className="bar-list dual-bar-list">
+              {elasticDailyRows.map((row) => {
+                const elasticWidth = (row.elasticAlerts / dailyScale) * 100
+                const prtgWidth = (row.prtgRiskSnapshot / dailyScale) * 100
+                return (
+                  <li key={row.date.toISOString()} className="dual-bar-item">
+                    <span>{row.date.toLocaleDateString('vi-VN')}</span>
+                    <div className="dual-bar-column">
+                      <div className="dual-bar-row">
+                        <em>Elastic alerts</em>
+                        <div className="bar-track">
+                          <div className="bar-fill danger" style={{ width: `${Math.max(elasticWidth, row.elasticAlerts > 0 ? 4 : 0)}%` }} />
+                        </div>
+                        <strong>{row.elasticAlerts}</strong>
+                      </div>
+                      <div className="dual-bar-row">
+                        <em>PRTG risk</em>
+                        <div className="bar-track">
+                          <div className="bar-fill warn" style={{ width: `${Math.max(prtgWidth, row.prtgRiskSnapshot > 0 ? 4 : 0)}%` }} />
+                        </div>
+                        <strong>{row.prtgRiskSnapshot}</strong>
+                      </div>
+                    </div>
+                  </li>
+                )
+              })}
+            </ul>
+          </section>
+        </div>
+      </section>
 
       <section className="panel">
         <div className="score-line">

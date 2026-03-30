@@ -6,7 +6,7 @@ import logging
 
 from config import settings
 from database import engine, Base
-from routes import auth, users, prtg, audit, alerts, operations, gates, ws_logs
+from routes import auth, users, prtg, audit, alerts, operations, gates, ws_logs, paloalto
 from redis_service import init_redis, close_redis
 from kafka_service import init_kafka, close_kafka
 from elasticsearch_service import init_elasticsearch_service, close_elasticsearch_service, get_es_service
@@ -122,6 +122,7 @@ app.include_router(audit.router, prefix="/api/audit", tags=["audit"])
 app.include_router(alerts.router, prefix="/api/alerts", tags=["alerts"])
 app.include_router(operations.router, prefix="/api/operations", tags=["operations"])
 app.include_router(gates.router, prefix="/api/gates", tags=["gates"])
+app.include_router(paloalto.router, prefix="/api/paloalto", tags=["paloalto"])
 app.include_router(ws_logs.router, tags=["websocket"])
 
 

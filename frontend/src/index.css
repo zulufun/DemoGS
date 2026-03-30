@@ -419,6 +419,35 @@ button:disabled {
   background: linear-gradient(90deg, #0c8d88, #d87d1d);
 }
 
+.dual-bar-list {
+  gap: 12px;
+}
+
+.dual-bar-item {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: 10px;
+  align-items: start;
+}
+
+.dual-bar-column {
+  display: grid;
+  gap: 8px;
+}
+
+.dual-bar-row {
+  display: grid;
+  grid-template-columns: 90px 1fr auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.dual-bar-row em {
+  font-style: normal;
+  font-size: 0.83rem;
+  color: var(--muted);
+}
+
 .prtg-table-wrap {
   margin-top: 16px;
 }
@@ -504,5 +533,9 @@ button:disabled {
 
   .content {
     padding: 16px;
+  }
+
+  .dual-bar-item {
+    grid-template-columns: 1fr;
   }
 }

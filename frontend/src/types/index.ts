@@ -73,6 +73,27 @@ export interface AlertItem {
   created_at: string
 }
 
+export interface ElasticDailyStats {
+  date: string
+  total: number
+  alerts: number
+  warning: number
+  critical: number
+}
+
+export interface ElasticOverviewStats {
+  systems_count: number
+  total_events_7d: number
+  alerts_7d: number
+  warning_7d: number
+  critical_7d: number
+  top_hosts: Array<{
+    host: string
+    count: number
+  }>
+  daily: ElasticDailyStats[]
+}
+
 export interface AdminUserInput {
   email: string
   password?: string
